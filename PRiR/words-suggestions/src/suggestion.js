@@ -1,11 +1,13 @@
+import $ from 'jquery';
+
 var Suggestion = (function () {
 	var init = function () {
 		addHandler();
 	};
 
 	var addHandler = function () {
-		var textarea = document.getElementById('box');
-		var result = document.getElementById('result');
+		var textarea = $('#box');
+		var result = $('#result');
 
 		textarea.onkeyup = function () {
 			var words = this.value.split(' ');
