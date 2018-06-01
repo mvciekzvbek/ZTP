@@ -1,6 +1,5 @@
 var Suggestion = (function () {
 	var init = function () {
-		console.log('Initialize module');
 		addHandler();
 	};
 
