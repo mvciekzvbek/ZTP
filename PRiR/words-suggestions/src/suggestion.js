@@ -1,7 +1,10 @@
 import $ from 'jquery';
 
 var Suggestion = (function () {
+	var count = 0;
+
 	var init = function () {
+		getFileLines();
 		addHandler();
 	};
 
@@ -15,12 +18,26 @@ var Suggestion = (function () {
 			var target = (words[words.length - 1] !== '' || words[words.length - 1].length < 2 ? words[words.length - 1] : words[words.length - 2]);
 
 			console.log(target);
-
 			result.html(target);
 		});
 	};
 
-	var workerFunction = function () {
+	var getFileLines = function (fn) {
+		$.ajax({
+			url: 'slowa.txt',
+			async: true,
+			success: function (data) {
+				var nLines = 0;
+				for (var i = 0, n = data.length; i < n; ++i) {
+					if (data[i] === '\n') {
+						++nLines;
+					}
+				}
+				count = nLines;
+
+				// divide file into 4 threads
+			}
+		});
 	};
 
 	/**
