@@ -9,15 +9,15 @@ var Suggestion = (function () {
 		var textarea = $('#box');
 		var result = $('#result');
 
-		textarea.onkeyup = function () {
+		textarea.keyup(function () {
 			var words = this.value.split(' ');
 
 			var target = (words[words.length - 1] !== '' || words[words.length - 1].length < 2 ? words[words.length - 1] : words[words.length - 2]);
 
 			console.log(target);
 
-			result.innerHTML = target;
-		};
+			result.html(target);
+		});
 	};
 
 	var workerFunction = function () {
