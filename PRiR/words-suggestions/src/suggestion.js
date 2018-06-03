@@ -1,43 +1,81 @@
 import $ from 'jquery';
 
-var Suggestion = (function () {
-	var count = 0;
+var suggestion = (function () {
+	var lines = 0;
+	var threads = 4;
 
 	var init = function () {
-		getFileLines();
+		prepareThreads(4);
 		addHandler();
 	};
 
 	var addHandler = function () {
 		var textarea = $('#box');
-		var result = $('#result');
+		var resultBox = $('#result');
 
 		textarea.keyup(function () {
 			var words = this.value.split(' ');
 
 			var target = (words[words.length - 1] !== '' || words[words.length - 1].length < 2 ? words[words.length - 1] : words[words.length - 2]);
 
-			console.log(target);
-			result.html(target);
+			var result = findResult(target);
+			resultBox.html(target);
 		});
 	};
 
-	var getFileLines = function (fn) {
+	var hackFunctionToBuffer = function (f) {
+		return URL.createObjectURL(new Blob([`(${f.toString()})()`], { type: 'application/javascript' }));
+	};
+
+	var prepareThreads = function (threads) {
 		$.ajax({
 			url: 'slowa.txt',
 			async: true,
 			success: function (data) {
-				var nLines = 0;
 				for (var i = 0, n = data.length; i < n; ++i) {
 					if (data[i] === '\n') {
-						++nLines;
+						++lines;
 					}
 				}
-				count = nLines;
-
-				// divide file into 4 threads
 			}
 		});
+	};
+
+	var findResult = function (word) {
+		var n4 = Math.floor(lines / threads);
+
+		var offset = lines - n4 * threads;
+		var results = [];
+
+		var workerBlob = hackFunctionToBuffer(workerFunction);
+
+		for (var j = 0; j < threads; j++) {
+			var worker = new Worker(workerBlob);
+
+			var start = j * n4;
+			var end = (j === 3 ? (j + 1) * n4 + offset : (j + 1) * n4);
+
+			// recv
+			worker.onmessage = function (message) {
+				results.push(message.data);
+			};
+
+			// send
+			worker.postMessage({
+				start, end
+			});
+		}
+	};
+
+	var workerFunction = function () {
+		this.onmessage = function (message) {
+			var start = message.data.start;
+			var end = message.data.end;
+			this.postMessage({
+				start: (start / 2).toString(),
+				end: (end / 2).toString()
+			});
+		};
 	};
 
 	/**
@@ -82,4 +120,4 @@ var Suggestion = (function () {
 	};
 })();
 
-export default Suggestion;
+export default suggestion;
