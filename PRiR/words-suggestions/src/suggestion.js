@@ -2,29 +2,43 @@ import $ from 'jquery';
 
 var suggestion = (function () {
 	var threads = 4;
+	var workers = [];
+	var textarea = $('#box');
+	var resultBox = $('#result');
+	var start;
 	var words = {
 		0: [],
 		1: [],
 		2: [],
 		3: []
 	};
-	var workers = [];
+	var interval = null;
+	var isIntervalSet = false;
 	var found = false;
-
-	var textarea = $('#box');
-	var resultBox = $('#result');
-	var start;
+	var result = '';
 
 	var init = function () {
-		prepareThreads(4);
+		prepareThreads();
 
 		textarea.keyup(function () {
-			var typed = this.value.split(' ');
+			if (!isIntervalSet) {
+				isIntervalSet = true;
+				found = false;
+				interval = setInterval(function () {
+					var text = textarea.val();
+					var textArr = text.split(' ');
 
-			var target = (typed[typed.length - 1] !== '' || typed[typed.length - 1].length < 2 ? typed[typed.length - 1] : typed[typed.length - 2]);
+					if (textArr[textArr.length - 1] !== '') {
+						start = Date.now();
+						findResult(textArr[textArr.length - 1].toLowerCase());
+					}
+				}, 3000);
+			}
+		});
 
-			start = Date.now();
-			findResult(target);
+		resultBox.bind('DOMSubtreeModified', function () {
+			clearInterval(interval);
+			isIntervalSet = false;
 		});
 	};
 
@@ -67,9 +81,14 @@ var suggestion = (function () {
 		});
 	};
 
-	var findResult = function (target) {
-		var result = '';
+	var finish = function (word) {
+		result = word;
+		resultBox.html(result + ', ' + (Date.now() - start) / 1000);
+	};
 
+	var findResult = function (target) {
+		var min = 4;
+		var results = {};
 		for (var j = 0, n = workers.length; j < n; j++) {
 			var worker = workers[j];
 
@@ -79,23 +98,17 @@ var suggestion = (function () {
 			});
 
 			// recv
-			worker.onmessage = function (message) {
-				var word = message.data.word;
-				var distance = message.data.distance;
-				var min = 99;
+			worker.onmessage = function (e) {
+				var word = e.data.word;
+				var distance = e.data.distance;
 
 				if (!found) {
-					if (word === target) {
-						result = word;
-						resultBox.html(result + ', ' + (Date.now() - start) / 1000);
+					if (distance === 0) {
 						found = true;
-						return;
-					} else {
-						if (distance < min) {
-							min = distance;
-							result = word;
-							resultBox.html(result + ', ' + (Date.now() - start) / 1000);
-						}
+						finish(word);
+					} else if (distance === 1) {
+						found = true;
+						finish(word);
 					}
 				}
 			};
@@ -103,7 +116,7 @@ var suggestion = (function () {
 	};
 
 	var workerFunction = function () {
-		var words = [];
+		var words = {};
 		/**
 		 * @param {string} a
 		 * @param {string} b
@@ -148,28 +161,34 @@ var suggestion = (function () {
 			var msg = e.data;
 			switch (msg.content) {
 				case 'array':
-					words = msg.words;
+					for (const key of msg.words) {
+						words[key] = 1;
+					}
 					break;
 				case 'target':
 					var target = msg.word;
-					var minimumDistance = 9999999;
+					var minimumDistance = 3;
 					var word = '';
-
-					for (var i = 0, n = words.length; i < n; i++) {
-						var distance = levenshteinDistance(target, words[i]);
-						if (distance === 0) {
-							word = words[i];
-							minimumDistance = 0;
-							break;
-						} else if (distance < minimumDistance) {
-							minimumDistance = distance;
-							word = words[i];
+					if (words.hasOwnProperty(target)) {
+						word = target;
+						minimumDistance = 0;
+					} else {
+						for (var key in words) {
+							if (words.hasOwnProperty(key)) {
+								var distance = levenshteinDistance(target, key);
+								if (distance < minimumDistance) {
+									minimumDistance = distance;
+									word = key;
+								}
+							}
 						}
 					}
-					this.postMessage({
-						word,
-						distance: minimumDistance
-					});
+					if (word) {
+						this.postMessage({
+							word,
+							distance: minimumDistance
+						});
+					}
 					break;
 			}
 		};
