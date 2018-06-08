@@ -6,16 +6,16 @@ var suggestion = (function () {
 	var textarea = $('#box');
 	var resultBox = $('#result');
 	var start;
+	var interval = null;
+	var isIntervalSet = false;
+	var found = false;
+	var result = '';
 	var words = {
 		0: [],
 		1: [],
 		2: [],
 		3: []
 	};
-	var interval = null;
-	var isIntervalSet = false;
-	var found = false;
-	var result = '';
 
 	var init = function () {
 		prepareThreads();
