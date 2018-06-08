@@ -87,8 +87,6 @@ var suggestion = (function () {
 	};
 
 	var findResult = function (target) {
-		var min = 4;
-		var results = {};
 		for (var j = 0, n = workers.length; j < n; j++) {
 			var worker = workers[j];
 
@@ -116,7 +114,7 @@ var suggestion = (function () {
 	};
 
 	var workerFunction = function () {
-		var words = {};
+		var words = [];
 		/**
 		 * @param {string} a
 		 * @param {string} b
@@ -161,25 +159,21 @@ var suggestion = (function () {
 			var msg = e.data;
 			switch (msg.content) {
 				case 'array':
-					for (const key of msg.words) {
-						words[key] = 1;
-					}
+					words = msg.words;
 					break;
 				case 'target':
 					var target = msg.word;
 					var minimumDistance = 3;
 					var word = '';
-					if (words.hasOwnProperty(target)) {
+					if (words.indexOf(target) !== -1) {
 						word = target;
 						minimumDistance = 0;
 					} else {
-						for (var key in words) {
-							if (words.hasOwnProperty(key)) {
-								var distance = levenshteinDistance(target, key);
-								if (distance < minimumDistance) {
-									minimumDistance = distance;
-									word = key;
-								}
+						for (var i = 0, n = words.length; i < n; i++) {
+							var distance = levenshteinDistance(target, words[i]);
+							if (distance < minimumDistance) {
+								minimumDistance = distance;
+								word = words[i];
 							}
 						}
 					}
