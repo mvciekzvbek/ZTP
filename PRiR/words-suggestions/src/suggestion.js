@@ -1,7 +1,7 @@
 import $ from 'jquery';
 
 let suggestion = (() => {
-	const threads = navigator.hardwareConcurrency;
+	const threads = 1;
 	let workers = [];
 	const textarea = $('#box');
 	const resultBox = $('#result');
@@ -85,7 +85,7 @@ let suggestion = (() => {
 	 */
 	let finish = (word) => {
 		result = word;
-		resultBox.html(result + ', ' + (Date.now() - start) / 1000);
+		resultBox.html(result + ', ' + (Date.now() - start) / 1000 + 's');
 	};
 
 	/**
@@ -170,7 +170,6 @@ let suggestion = (() => {
 
 		this.onmessage = (e) => {
 			let msg = e.data;
-			console.log(msg);
 			switch (msg.content) {
 				case 'array':
 					words = msg.words;
