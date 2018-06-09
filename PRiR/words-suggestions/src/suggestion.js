@@ -1,7 +1,7 @@
 import $ from 'jquery';
 
 let suggestion = (() => {
-	const threads = 1;
+	const threads = navigator.hardwareConcurrency;
 	let workers = [];
 	const textarea = $('#box');
 	const resultBox = $('#result');
