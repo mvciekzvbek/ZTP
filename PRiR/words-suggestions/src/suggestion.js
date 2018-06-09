@@ -112,7 +112,7 @@ let suggestion = (() => {
 	};
 
 	var workerFunction = function () {
-		var words = [];
+		let words = [];
 		/**
 		 * @param {string} a
 		 * @param {string} b
@@ -154,21 +154,21 @@ let suggestion = (() => {
 		};
 
 		this.onmessage = (e) => {
-			var msg = e.data;
+			let msg = e.data;
 			switch (msg.content) {
 				case 'array':
 					words = msg.words;
 					break;
 				case 'target':
-					var target = msg.word;
-					var minimumDistance = 3;
-					var word = '';
+					const target = msg.word;
+					let minimumDistance = 3;
+					let word = '';
 					if (words.indexOf(target) !== -1) {
 						word = target;
 						minimumDistance = 0;
 					} else {
-						for (var i = 0, n = words.length; i < n; i++) {
-							var distance = levenshteinDistance(target, words[i]);
+						for (let i = 0, n = words.length; i < n; i++) {
+							const distance = levenshteinDistance(target, words[i]);
 							if (distance < minimumDistance) {
 								minimumDistance = distance;
 								word = words[i];
