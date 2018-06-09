@@ -1,7 +1,7 @@
 import $ from 'jquery';
 
 let suggestion = (() => {
-	const threads = 4;
+	const threads = navigator.hardwareConcurrency;
 	let workers = [];
 	const textarea = $('#box');
 	const resultBox = $('#result');
@@ -11,12 +11,11 @@ let suggestion = (() => {
 	let found = false;
 	let result = '';
 	let words = {
-		0: [],
-		1: [],
-		2: [],
-		3: []
 	};
 
+	/**
+	 * initializes application, adds listeners and prepares threads
+	 */
 	let init = () => {
 		prepareThreads();
 
@@ -42,8 +41,15 @@ let suggestion = (() => {
 		});
 	};
 
+	/**
+	 * creates fake url for worker
+	 * @param {*} f 
+	 */
 	let hackFunctionToBuffer = (f) => window.URL.createObjectURL(new Blob([`(${f.toString()})()`], { type: 'application/javascript' }));
 
+	/**
+	 * prepares threads, sends divided txt file 
+	 */
 	let prepareThreads = () => {
 		$.ajax({
 			url: 'slowa.txt',
@@ -52,14 +58,19 @@ let suggestion = (() => {
 				const lines = data.split('\n');
 				for (let i = 0, n = lines.length; i < n; ++i) {
 					let line = lines[i].slice(0, -1);
-					if (i % threads === 0) {
-						words[0].push(line);
-					} else if (i % threads === 1) {
-						words[1].push(line);
-					} else if (i % threads === 2) {
-						words[2].push(line);
-					} else if (i % threads === 3) {
-						words[3].push(line);
+					const index = i % threads;
+					if (index === 0) {
+						words[index] = words[index] || [];
+						words[index].push(line);
+					} else if (index === 1) {
+						words[index] = words[index] || [];
+						words[index].push(line);
+					} else if (index === 2) {
+						words[index] = words[index] || [];
+						words[index].push(line);
+					} else if (index === 3) {
+						words[index] = words[index] || [];
+						words[index].push(line);
 					}
 				}
 
@@ -79,15 +90,26 @@ let suggestion = (() => {
 		});
 	};
 
+	/**
+	 * printing result
+	 * 
+	 * @param {string} word 
+	 */
 	let finish = (word) => {
 		result = word;
 		resultBox.html(result + ', ' + (Date.now() - start) / 1000);
 	};
 
+	/**
+	 * communicates with workers to find the result
+	 * 
+	 * @param {string} target 
+	 */
 	let findResult = (target) => {
 		for (let j = 0, n = workers.length; j < n; j++) {
 			let worker = workers[j];
 
+			// send
 			worker.postMessage({
 				content: 'target',
 				word: target
@@ -111,9 +133,14 @@ let suggestion = (() => {
 		};
 	};
 
+	/**
+	 * worker function
+	 */
 	var workerFunction = function () {
 		let words = [];
+
 		/**
+		 * calculates levenshtein distance between two words
 		 * @param {string} a
 		 * @param {string} b
 		 * @return {number}
@@ -155,6 +182,7 @@ let suggestion = (() => {
 
 		this.onmessage = (e) => {
 			let msg = e.data;
+			console.log(msg);
 			switch (msg.content) {
 				case 'array':
 					words = msg.words;
