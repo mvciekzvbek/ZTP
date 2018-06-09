@@ -10,8 +10,7 @@ let suggestion = (() => {
 	let isIntervalSet = false;
 	let found = false;
 	let result = '';
-	let words = {
-	};
+	let words = {};
 
 	/**
 	 * initializes application, adds listeners and prepares threads
@@ -59,19 +58,8 @@ let suggestion = (() => {
 				for (let i = 0, n = lines.length; i < n; ++i) {
 					let line = lines[i].slice(0, -1);
 					const index = i % threads;
-					if (index === 0) {
-						words[index] = words[index] || [];
-						words[index].push(line);
-					} else if (index === 1) {
-						words[index] = words[index] || [];
-						words[index].push(line);
-					} else if (index === 2) {
-						words[index] = words[index] || [];
-						words[index].push(line);
-					} else if (index === 3) {
-						words[index] = words[index] || [];
-						words[index].push(line);
-					}
+					words[index] = words[index] || [];
+					words[index].push(line);
 				}
 
 				var workerBlob = hackFunctionToBuffer(workerFunction);
