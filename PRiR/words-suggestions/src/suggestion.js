@@ -1,30 +1,30 @@
 import $ from 'jquery';
 
-var suggestion = (function () {
-	var threads = 4;
-	var workers = [];
-	var textarea = $('#box');
-	var resultBox = $('#result');
-	var start;
-	var interval = null;
-	var isIntervalSet = false;
-	var found = false;
-	var result = '';
-	var words = {
+let suggestion = (() => {
+	const threads = 4;
+	let workers = [];
+	const textarea = $('#box');
+	const resultBox = $('#result');
+	let start;
+	let interval = null;
+	let isIntervalSet = false;
+	let found = false;
+	let result = '';
+	let words = {
 		0: [],
 		1: [],
 		2: [],
 		3: []
 	};
 
-	var init = function () {
+	let init = () => {
 		prepareThreads();
 
-		textarea.keyup(function () {
+		textarea.keyup(() => {
 			if (!isIntervalSet) {
 				isIntervalSet = true;
 				found = false;
-				interval = setInterval(function () {
+				interval = setInterval(() => {
 					var text = textarea.val();
 					var textArr = text.split(' ');
 
@@ -36,24 +36,22 @@ var suggestion = (function () {
 			}
 		});
 
-		resultBox.bind('DOMSubtreeModified', function () {
+		resultBox.bind('DOMSubtreeModified', () => {
 			clearInterval(interval);
 			isIntervalSet = false;
 		});
 	};
 
-	var hackFunctionToBuffer = function (f) {
-		return URL.createObjectURL(new Blob([`(${f.toString()})()`], { type: 'application/javascript' }));
-	};
+	let hackFunctionToBuffer = (f) => window.URL.createObjectURL(new Blob([`(${f.toString()})()`], { type: 'application/javascript' }));
 
-	var prepareThreads = function () {
+	let prepareThreads = () => {
 		$.ajax({
 			url: 'slowa.txt',
 			async: true,
-			success: function (data) {
-				var lines = data.split('\n');
-				for (var i = 0, n = lines.length; i < n; ++i) {
-					var line = lines[i].slice(0, -1);
+			success: (data) => {
+				const lines = data.split('\n');
+				for (let i = 0, n = lines.length; i < n; ++i) {
+					let line = lines[i].slice(0, -1);
 					if (i % threads === 0) {
 						words[0].push(line);
 					} else if (i % threads === 1) {
@@ -67,28 +65,28 @@ var suggestion = (function () {
 
 				var workerBlob = hackFunctionToBuffer(workerFunction);
 
-				for (var j = 0; j < threads; j++) {
+				for (let i = 0; i < threads; i++) {
 					var worker = new Worker(workerBlob);
 					workers.push(worker);
 
 					// send just an array
 					worker.postMessage({
 						content: 'array',
-						words: words[j]
+						words: words[i]
 					});
 				}
 			}
 		});
 	};
 
-	var finish = function (word) {
+	let finish = (word) => {
 		result = word;
 		resultBox.html(result + ', ' + (Date.now() - start) / 1000);
 	};
 
-	var findResult = function (target) {
-		for (var j = 0, n = workers.length; j < n; j++) {
-			var worker = workers[j];
+	let findResult = (target) => {
+		for (let j = 0, n = workers.length; j < n; j++) {
+			let worker = workers[j];
 
 			worker.postMessage({
 				content: 'target',
@@ -96,9 +94,9 @@ var suggestion = (function () {
 			});
 
 			// recv
-			worker.onmessage = function (e) {
-				var word = e.data.word;
-				var distance = e.data.distance;
+			worker.onmessage = (e) => {
+				const word = e.data.word;
+				const distance = e.data.distance;
 
 				if (!found) {
 					if (distance === 0) {
@@ -120,7 +118,7 @@ var suggestion = (function () {
 		 * @param {string} b
 		 * @return {number}
 		 */
-		var levenshteinDistance = function (a, b) {
+		let levenshteinDistance = (a, b) => {
 			if (!a || !b) {
 				return;
 			}
@@ -131,19 +129,19 @@ var suggestion = (function () {
 			// Fill the first row of the matrix.
 			// If this is first row then we're transforming empty string to a.
 			// In this case the number of transformations equals to size of a substring.
-			for (var i = 0; i <= a.length; i += 1) {
+			for (let i = 0; i <= a.length; i += 1) {
 				distanceMatrix[0][i] = i;
 			}
 
 			// Fill the first column of the matrix.
 			// If this is first column then we're transforming empty string to b.
 			// In this case the number of transformations equals to size of b substring.
-			for (var j = 0; j <= b.length; j += 1) {
+			for (let j = 0; j <= b.length; j += 1) {
 				distanceMatrix[j][0] = j;
 			}
 
-			for (var j = 1; j <= b.length; j += 1) {
-				for (var i = 1; i <= a.length; i += 1) {
+			for (let j = 1; j <= b.length; j += 1) {
+				for (let i = 1; i <= a.length; i += 1) {
 					const indicator = a[i - 1] === b[j - 1] ? 0 : 1;
 					distanceMatrix[j][i] = Math.min(
 						distanceMatrix[j][i - 1] + 1, // devarion
@@ -155,7 +153,7 @@ var suggestion = (function () {
 			return distanceMatrix[b.length][a.length];
 		};
 
-		this.onmessage = function (e) {
+		this.onmessage = (e) => {
 			var msg = e.data;
 			switch (msg.content) {
 				case 'array':
