@@ -1,6 +1,6 @@
 import $ from 'jquery';
 
-var suggestion = (() => {
+var suggestion = (function () {
 	var threads = navigator.hardwareConcurrency;
 	var workers = [];
 	var textarea = $('#box');
@@ -51,11 +51,11 @@ var suggestion = (() => {
 	/**
 	 * prepares threads, sends divided txt file 
 	 */
-	var prepareThreads = () => {
+	var prepareThreads = function () {
 		$.ajax({
 			url: 'slowa.txt',
 			async: true,
-			success: (data) => {
+			success: function (data) {
 				const lines = data.split('\n');
 				for (var i = 0, n = lines.length; i < n; ++i) {
 					var line = lines[i].slice(0, -1);
