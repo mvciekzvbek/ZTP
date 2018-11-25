@@ -1,2 +1,4 @@
 node_modules/
 words*
+.idea
+.DS_Store
