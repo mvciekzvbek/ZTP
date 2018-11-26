@@ -2,20 +2,19 @@ package com.studia.tosi.vernamcipher;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.List;
 import java.util.Random;
 
 public class VernamCipher {
-    private String message;
-    private String messageBinary;
-    private boolean logOn = true;
-    private String keys = "";
+    private boolean logOn = false;
+    private BitSet key;
+    private BitSet messageBits;
 
     public VernamCipher (String message) {
         this.log("VernamCipher: constructor");
-        this.message = message;
-        this.messageBinary = this.toBinary(message, 8);
-        this.log(Integer.toString(this.messageBinary.length()));
+        this.messageBits = this.toBits(message);
+        this.key = this.executeBlumBlumShub();
     }
 
     private void log (String message) {
@@ -24,50 +23,13 @@ public class VernamCipher {
         }
     }
 
-    private String toBinary(String str) {
-        String result = "";
-        char[] messChar = str.toCharArray();
+    private BitSet toBits (String message) {
+        byte[] bytes = message.getBytes();
 
-        for (int i = 0; i < messChar.length; i++) {
-            result += Integer.toBinaryString(messChar[i]);
-        }
+        BitSet bs = BitSet.valueOf(bytes);
 
-        this.log(result);
-
-        return result;
+        return bs;
     }
-
-    private String toBinary(String str, int bits) {
-        String result = "";
-        String tmpStr;
-        int tmpInt;
-        char[] messChar = str.toCharArray();
-
-        for (int i = 0; i < messChar.length; i++) {
-            tmpStr = Integer.toBinaryString(messChar[i]);
-            tmpInt = tmpStr.length();
-            if(tmpInt != bits) {
-                tmpInt = bits - tmpInt;
-                if (tmpInt == bits) {
-                    result += tmpStr;
-                } else if (tmpInt > 0) {
-                    for (int j = 0; j < tmpInt; j++) {
-                        result += "0";
-                    }
-                    result += tmpStr;
-                } else {
-                    System.err.println("argument 'bits' is too small");
-                }
-            } else {
-                result += tmpStr;
-            }
-        }
-
-        this.log(result);
-        return result;
-    }
-
-
 
     private BigInteger calculateN (BigInteger p, BigInteger q) {
         return p.multiply(q);
@@ -104,7 +66,7 @@ public class VernamCipher {
         return primes;
     }
 
-    private String executeBlumBlumShub () {
+    private BitSet executeBlumBlumShub () {
         BigInteger[] primes = this.generatePrimes();
         BigInteger p = primes[0];
         BigInteger q = primes[1];
@@ -123,63 +85,36 @@ public class VernamCipher {
         this.log("x0: " + x0.toString());
 
         List<BigInteger> x = new ArrayList<BigInteger>();
-        String k = "";
+        BitSet k = new BitSet();
 
         x.add(x0);
 
-        for (int i = 1; i <= this.messageBinary.length(); i++) {
+        for (int i = 1; i <= this.messageBits.length(); i++) {
             x.add(((x.get(i - 1)).pow(2)).mod(n));
-            k += x.get(i).mod(two);
+            if (!x.get(i).mod(two).equals(zero)) {
+                k.set(i);
+            }
         }
 
         return k;
     }
 
-    public String encryptData () {
-        this.log("VernamCipher: encryptData");
+    public byte[] encryptData() {
+        BitSet key = (BitSet) this.key.clone();
 
-        this.keys = this.executeBlumBlumShub();
-        String cypher = "";
-        this.log(this.keys);
-        this.log(this.messageBinary);
+        key.xor(this.messageBits);
 
-        for(int i = 0; i < this.keys.length(); i++) {
-            byte key = (byte) this.keys.charAt(i);
-            byte msgEl = (byte) this.messageBinary.charAt(i);
-
-            System.out.println((char) key);
-            System.out.println((char) msgEl);
-
-            cypher += Integer.toString((key ^ msgEl) % 2);
-        }
-
-        return cypher;
+        return key.toByteArray();
     }
 
-    public String decryptData(String text) {
-        String msg = "";
+    public String decryptData(byte[] bytes) {
+        BitSet bs = BitSet.valueOf(bytes);
+        BitSet key = (BitSet) this.key.clone();
 
-        for(int i = 0; i < this.keys.length(); i++) {
-            byte key = (byte) this.keys.charAt(i);
-            byte encryptedEl = (byte) text.charAt(i);
+        key.xor(bs);
 
-            System.out.println((char) key);
-            System.out.println((char) encryptedEl);
+        byte[] decodedBytes = key.toByteArray();
 
-            int msgEl = (key ^ encryptedEl) % 2;
-
-            this.log(Integer.toString(msgEl));
-
-            msg += Integer.toString(msgEl);
-        }
-
-        String output = "";
-        for(int i = 0; i <= msg.length() - 8; i+=8)
-        {
-            int k = Integer.parseInt(msg.substring(i, i+8), 2);
-            output += (char) k;
-        }
-        return output;
+        return new String(decodedBytes);
     }
-
 }
