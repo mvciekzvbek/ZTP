@@ -80,24 +80,58 @@ class RsaCipher {
 
         List<BigInteger> bigIntegers = new ArrayList<>();
 
+        for(int i = 0; i < devidedByteArray.size(); i++) {
+            System.out.println("i = " + i + ", el size = " + devidedByteArray.get(i).length);
+        }
+
         for (byte[] part : devidedByteArray) {
+//            System.out.println(part.length);
             bigIntegers.add(encryptPart(part));
         }
+
+//        System.out.println(bigIntegers.size());
 
         return bigIntegers;
     }
 
-    public static List<byte[]> divideByteArray(byte[] source, int chunksize) {
+    private static List<byte[]> divideByteArray(byte[] source, int chunksize) {
         List<byte[]> result = new ArrayList<>();
-        int start = 0;
+        int i,j;
 
-        while (start < source.length) {
-            int end = Math.min(source.length, start + chunksize);
-            result.add(Arrays.copyOfRange(source, start, end));
-            start += chunksize;
+        for (i = 0, j = source.length; i <= j; i += chunksize) {
+            result.add(Arrays.copyOfRange(source, i, i + chunksize));
         }
 
         return result;
+    }
+
+
+    private byte[] convertBytes(List<Byte> bytes) {
+        byte[] ret = new byte[bytes.size()];
+        for (int i = 0; i < ret.length; i++) {
+            ret[i] = bytes.get(i);
+        }
+        return ret;
+    }
+
+    private boolean isLastPart(int index, List<BigInteger> decrypted) {
+        return index == decrypted.size() - 1;
+    }
+
+    private byte[] removeAdditionalBytes(byte[] bytes) {
+        System.out.println("Last part size: " + bytes.length);
+        int additional = this.size - bytes.length;
+        System.out.println("Additional: " + additional);
+        byte[] ret = new byte[this.size];
+
+        for(int i = 0; i < this.size; i++) {
+            // System.out.println(i);
+            ret[i] = bytes[i];
+        }
+
+        System.out.println("Ret array size: " + ret.length);
+
+        return ret;
     }
 
     public List<BigInteger> encrypt (byte[] bytes) {
@@ -122,26 +156,32 @@ class RsaCipher {
             decrypted.add(decryptPart(part));
         }
 
+//        System.out.println(decrypted.size());
+
+
         List <Byte> bytes = new ArrayList<Byte>();
 
-        for (int i = 0, j = decrypted.size(); i < j; i++) {
+        for (int i = 0; i < decrypted.size(); i++) {
             BigInteger part = decrypted.get(i);
             byte[] partAsBytes = BigIntegers.asUnsignedByteArray(part);
 
-            for(byte b : partAsBytes) {
-                System.out.println(b);
+//            System.out.println(partAsBytes.length);
+//            System.out.println(this.size);
+
+            if (partAsBytes.length < this.size && this.isLastPart(i, decrypted)) {
+                System.out.println("Last, i = " + i + " , el size = " + partAsBytes.length);
+                partAsBytes = removeAdditionalBytes(partAsBytes);
+            } else {
+                System.out.println("i = " + i + " , el size = " + partAsBytes.length);
+            }
+
+            for (byte b : partAsBytes) {
                 bytes.add(b);
             }
         }
 
-        return convertBytes(bytes);
-    }
+        System.out.println("Bytes size: " + bytes.size());
 
-    private byte[] convertBytes(List<Byte> bytes) {
-        byte[] ret = new byte[bytes.size()];
-        for (int i = 0; i < ret.length; i++) {
-            ret[i] = bytes.get(i);
-        }
-        return ret;
+        return convertBytes(bytes);
     }
 }

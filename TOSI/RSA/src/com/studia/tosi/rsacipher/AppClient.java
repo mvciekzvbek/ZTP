@@ -14,7 +14,7 @@ public class AppClient {
 
         byte[] bytes = output.toByteArray();
 
-        System.out.println(bytes.length);
+//        System.out.println(bytes.length);
 //        for (byte b : bytes) {
 //            System.out.println(b);
 //        }
@@ -24,7 +24,7 @@ public class AppClient {
 
 
     public static void createImageFromBytes(byte[] imageBytes, String filename, String ext) throws IOException {
-        System.out.println(imageBytes.length);
+//        System.out.println(imageBytes.length);
 //        for (byte b : imageBytes) {
 //            System.out.println(b);
 //        }
