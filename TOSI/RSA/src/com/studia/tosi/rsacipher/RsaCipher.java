@@ -66,9 +66,9 @@ class RsaCipher {
         return euler;
     }
 
-    private BigInteger encryptPart(byte[] part, PublicKey publicKey) {
+    private BigInteger encryptPart(byte[] part) {
         BigInteger biPart = new BigInteger(1, part);
-        return biPart.modPow(publicKey.n, publicKey.e);
+        return biPart.modPow(this.publicKey.e, this.publicKey.n);
     }
 
     private BigInteger decryptPart(BigInteger part) {
@@ -81,7 +81,7 @@ class RsaCipher {
         List<BigInteger> bigIntegers = new ArrayList<>();
 
         for (byte[] part : devidedByteArray) {
-            bigIntegers.add(encryptPart(part, this.publicKey));
+            bigIntegers.add(encryptPart(part));
         }
 
         return bigIntegers;
@@ -129,6 +129,7 @@ class RsaCipher {
             byte[] partAsBytes = BigIntegers.asUnsignedByteArray(part);
 
             for(byte b : partAsBytes) {
+                System.out.println(b);
                 bytes.add(b);
             }
         }
