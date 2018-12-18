@@ -13,11 +13,23 @@ public class AppClient {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         ImageIO.write(bufferimage, "jpg", output);
 
-        return output.toByteArray();
+        byte[] bytes = output.toByteArray();
+
+        System.out.println(bytes.length);
+//        for (byte b : bytes) {
+//            System.out.println(b);
+//        }
+
+
+        return bytes;
     }
 
 
     public static void createImageFromBytes(byte[] imageBytes) throws IOException {
+        System.out.println(imageBytes.length);
+//        for (byte b : imageBytes) {
+//            System.out.println(b);
+//        }
         try (FileOutputStream fos = new FileOutputStream("output.jpg")) {
             fos.write(imageBytes);
         }
