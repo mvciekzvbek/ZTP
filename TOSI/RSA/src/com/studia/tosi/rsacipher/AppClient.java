@@ -13,11 +13,7 @@ public class AppClient {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         ImageIO.write(bufferimage, "jpg", output);
 
-        byte[] bytes = output.toByteArray();
-//        for(byte b : bytes) {
-//            System.out.println(b);
-//        }
-        return bytes;
+        return output.toByteArray();
     }
 
 
@@ -33,12 +29,6 @@ public class AppClient {
 
             RsaCipher rsa = new RsaCipher();
             List<BigInteger> encrypted = rsa.encrypt(imageBytes);
-
-//            System.out.println("Encrypted image bytes: ");
-//            // print image bytes
-//            for (BigInteger el : encrypted) {
-//                System.out.println(el.toString());
-//            }
 
             byte[] decrypted = rsa.decrypt(encrypted);
 
