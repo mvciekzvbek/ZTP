@@ -14,20 +14,13 @@ public class AppClient {
 
         byte[] bytes = output.toByteArray();
 
-//        System.out.println(bytes.length);
-//        for (byte b : bytes) {
-//            System.out.println(b);
-//        }
+        System.out.println(bytes.length);
 
         return bytes;
     }
 
 
     public static void createImageFromBytes(byte[] imageBytes, String filename, String ext) throws IOException {
-//        System.out.println(imageBytes.length);
-//        for (byte b : imageBytes) {
-//            System.out.println(b);
-//        }
         try (FileOutputStream fos = new FileOutputStream(filename + "-output." + ext)) {
             fos.write(imageBytes);
         }
@@ -36,7 +29,7 @@ public class AppClient {
     public static void main(String[] args) {
         try {
 
-            String filenameWithExt = "frog.jpg";
+            String filenameWithExt = "wzorki.jpg";
 
             String filename = filenameWithExt.split("\\.")[0];
             String ext = filenameWithExt.split("\\.")[1];
@@ -45,8 +38,10 @@ public class AppClient {
 
             RsaCipher rsa = new RsaCipher();
             List<BigInteger> encrypted = rsa.encrypt(imageBytes);
+            // System.out.println(encrypted.size());
 
             byte[] decrypted = rsa.decrypt(encrypted);
+             System.out.println("AppClient.decrypted.length: " + decrypted.length);
 
             createImageFromBytes(decrypted, filename, ext);
         } catch (Exception e) {
