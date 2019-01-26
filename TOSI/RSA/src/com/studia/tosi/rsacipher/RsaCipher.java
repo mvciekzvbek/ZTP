@@ -2,10 +2,11 @@ package com.studia.tosi.rsacipher;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import org.bouncycastle.util.BigIntegers;
+
+import static java.util.Arrays.copyOfRange;
 
 class RsaCipher {
     private PublicKey publicKey;
@@ -15,7 +16,6 @@ class RsaCipher {
     private BigInteger four = new BigInteger("4");
     // n is 2048bit size which is 256bytes  => m < n => max size is 255 bytes
     private int size = 255;
-    private int bytesLength;
 
     private BigInteger[] generatePrimes() {
         BigInteger[] primes = new BigInteger[2];
@@ -67,80 +67,93 @@ class RsaCipher {
         return euler;
     }
 
-    private BigInteger encryptPart(byte[] part) {
-        BigInteger biPart = new BigInteger(1, part);
-        return biPart.modPow(this.publicKey.e, this.publicKey.n);
+    private BigInteger encryptPart(BigInteger part) {
+        return part.modPow(this.publicKey.e, this.publicKey.n);
     }
 
     private BigInteger decryptPart(BigInteger part) {
         return part.modPow(this.privateKey.d, this.privateKey.n);
     }
 
+    private List<BigInteger> createDataChunks(byte[] data)
+    {
+        List<BigInteger> chunks = new ArrayList<>();
+        byte[] chunk = null;
+        int chunksCount = 0;
+
+        for (byte item : data)
+        {
+            if (chunk == null)
+            {
+                chunk = new byte[255];
+            }
+
+            chunk[chunksCount++] = item;
+            if (chunksCount != 255)
+            {
+                continue;
+            }
+
+            chunks.add(new BigInteger(1, chunk));
+
+            chunk = null;
+            chunksCount = 0;
+        }
+
+        if (chunk != null && chunksCount > 0)
+        {
+            byte[] lastChunk = copyOfRange(chunk, 0, chunksCount + 1);
+            chunks.add(new BigInteger(1, lastChunk));
+        }
+
+        return chunks;
+    }
+
     private List<BigInteger> encryptImageBytes(byte[] imageBytes) {
-        List<byte[]> devidedByteArray = divideByteArray(imageBytes, this.size);
+        // List<byte[]> devidedByteArray = divideByteArray(imageBytes, this.size);
+        List<BigInteger> devidedByteArray = createDataChunks(imageBytes);
 
         List<BigInteger> bigIntegers = new ArrayList<>();
 
-        int size = 0;
-
-        for(int i = 0; i < devidedByteArray.size(); i++) {
-            System.out.println("i = " + i + ", el size = " + devidedByteArray.get(i).length);
-            size += devidedByteArray.get(i).length;
+        for(BigInteger el : devidedByteArray) {
+            bigIntegers.add(encryptPart(el));
         }
-
-        for (byte[] part : devidedByteArray) {
-            bigIntegers.add(encryptPart(part));
-        }
-
-        System.out.println("Size: " + size);
 
         return bigIntegers;
     }
-
+//
 //    private static List<byte[]> divideByteArray(byte[] source, int chunksize) {
 //        List<byte[]> result = new ArrayList<>();
-//        int i,j;
+//        int start = 0;
 //
-//        for (i = 0, j = source.length; i <= j; i += chunksize) {
-//            result.add(Arrays.copyOfRange(source, i, i + chunksize));
-//        }
-//
-//        return result;
-//    }
-    private static List<byte[]> divideByteArray(byte[] source, int chunksize) {
-        List<byte[]> result = new ArrayList<>();
-        int start = 0;
-
-        while (start < source.length) {
-            if (source.length - chunksize < start) {
-                System.out.println("LAST CHUNK");
-                byte[] last = new byte[source.length - start];
-
-                for(int i = start, j = 0; i < source.length; i++) {
-                    System.out.println(j + ": " + source[i]);
-                    last[j] = source[i];
-                    j++;
-                }
-//                System.out.println(last.length);
-                result.add(last);
-            } else {
-                // System.out.println(start);
-                int end = Math.min(source.length, start + chunksize);
-                result.add(Arrays.copyOfRange(source, start, end));
-            }
-            start += chunksize;
-        }
-
-        System.out.println("Last element of array length: " + result.get(result.size()-1).length);
-        System.out.println("List of byte array size: " + result.size());
-
 //        while (start < source.length) {
-//            int end = Math.min(source.length, start + chunksize);
-//            result.add(Arrays.copyOfRange(source, start, end));
+//            if (source.length - chunksize < start) {
+//                System.out.println("LAST CHUNK");
+//                byte[] last = new byte[source.length - start];
+//
+//                for(int i = start, j = 0; i < source.length; i++) {
+//                    System.out.println(j + ": " + source[i]);
+//                    last[j] = source[i];
+//                    j++;
+//                }
+//                result.add(last);
+//            } else {
+//                int end = Math.min(source.length, start + chunksize);
+//                result.add(Arrays.copyOfRange(source, start, end));
+//            }
 //            start += chunksize;
 //        }
-        return result;
-    }
+//
+//        System.out.println("Last element of array length: " + result.get(result.size()-1).length);
+//        System.out.println("List of byte array size: " + result.size());
+//
+//        System.out.println("DEVIDE START");
+//        for (byte[] bt : result) {
+//            System.out.println(bt.length);
+//        }
+//        System.out.println("DEVIDE END");
+//        return result;
+//    }
 
     public List<BigInteger> encrypt (byte[] bytes) {
         byte[] imageBytes = bytes;
@@ -155,8 +168,6 @@ class RsaCipher {
 
         System.out.println("image bytes length: " + imageBytes.length);
 
-        this.bytesLength = imageBytes.length;
-
         return encryptImageBytes(imageBytes);
     }
 
@@ -169,81 +180,57 @@ class RsaCipher {
         return ret;
     }
 
-    private boolean isLastPart(int index, List<BigInteger> decrypted) {
+    private boolean isLastChunk(int index, List<BigInteger> decrypted) {
         return index == decrypted.size() - 1;
     }
 
-    private byte[] removeAdditionalBytes(byte[] bytes) {
-        System.out.println("Last part size: " + bytes.length);
-        int additional = this.size - bytes.length;
-        System.out.println("Additional: " + additional);
+    private List<Byte> addMissingBytes(List<Byte> chunkBytes) {
+        int missing = 255 - chunkBytes.size();
 
-        byte[] ret = new byte[bytes.length];
+        List<Byte> padding = new ArrayList<>();
 
-        for(int i = 0; i < bytes.length; i++) {
-//             System.out.println(i);
-            ret[i] = bytes[i];
+        for (int i = 0; i < missing; i++) {
+            chunkBytes.add(new Byte("0"));
         }
 
-        System.out.println("Ret array size: " + ret.length);
-
-        return ret;
+        return chunkBytes;
     }
 
+    private List<Byte> convertToByteList(byte[] bytes)
+    {
+        List<Byte> result = new ArrayList<>();
 
-
-    public byte[] decrypt (List<BigInteger> message) {
-        int msgSize = 0;
-        int encryptedSize = 0;
-
-        List<BigInteger> encrypted = new ArrayList<BigInteger>();
-
-        // encrypt big integers
-        for (BigInteger part : message) {
-            byte[] msgPartAsBytes = BigIntegers.asUnsignedByteArray(part);
-            msgSize += msgPartAsBytes.length;
-            encrypted.add(decryptPart(part));
-
+        for (byte b : bytes)
+        {
+            result.add(b);
         }
 
-        for(BigInteger part : encrypted) {
-            byte[] partAsBytes = BigIntegers.asUnsignedByteArray(part);
-            encryptedSize += partAsBytes.length;
-        }d
+        return result;
+    }
 
-        System.out.println("message size: " + msgSize);
-        System.out.println("encrypted size: " + encryptedSize);
+    public byte[] decrypt (List<BigInteger> message) {
 
-        // List<BigInteger> encrypted = new ArrayList<>();
+        List<BigInteger> decrypted = new ArrayList<BigInteger>();
 
-        // encrypt big integers
-//        for (BigInteger part : message) {
-//            encrypted.add(decryptPart(part));
-//        }
+        for (BigInteger part : message) {
+            decrypted.add(decryptPart(part));
+        }
 
-        List <Byte> bytes = new ArrayList<>();
+        List<Byte> decryptedBytes = new ArrayList<>();
 
-        for (int i = 0; i < encrypted.size(); i++) {
-            BigInteger part = encrypted.get(i);
-            byte[] partAsBytes = BigIntegers.asUnsignedByteArray(part);
+        for (int i = 0; i < decrypted.size(); i++) {
+            BigInteger chunk = decrypted.get(i);
+            List<Byte> chunkBytes = convertToByteList(BigIntegers.asUnsignedByteArray(chunk));
 
-//            if (partAsBytes.length < this.size && this.isLastPart(i, encrypted)) {
-//                System.out.println("Last, i = " + i + ", el size = " + partAsBytes.length);
-////                partAsBytes = removeAdditionalBytes(partAsBytes);
-//            } else {
-//                System.out.println("i = " + i + ", el size = " + partAsBytes.length);
-//            }
+            if (chunkBytes.size() < 255 && !isLastChunk(i, decrypted)) {
+                chunkBytes = addMissingBytes(chunkBytes);
+            }
 
-            for (byte b : partAsBytes) {
-                // System.out.println(b);
-                bytes.add(b);
+            for (int j = 0; j < chunkBytes.size(); j++) {
+                decryptedBytes.add(chunkBytes.get(j));
             }
         }
 
-        byte[] b1 = convertBytes(bytes);
-
-        System.out.println("Bytes size: " + b1.length);
-
-        return b1;
+        return convertBytes(decryptedBytes);
     }
 }

@@ -1,5 +1,7 @@
 package com.studia.tosi.rsacipher;
 
+import org.bouncycastle.util.BigIntegers;
+
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
@@ -29,7 +31,7 @@ public class AppClient {
     public static void main(String[] args) {
         try {
 
-            String filenameWithExt = "wzorki.jpg";
+            String filenameWithExt = "gory.jpeg";
 
             String filename = filenameWithExt.split("\\.")[0];
             String ext = filenameWithExt.split("\\.")[1];
@@ -38,6 +40,14 @@ public class AppClient {
 
             RsaCipher rsa = new RsaCipher();
             List<BigInteger> encrypted = rsa.encrypt(imageBytes);
+
+            System.out.println("FRONT Start");
+            for (BigInteger part : encrypted) {
+                byte[] msgPartAsBytes = BigIntegers.asUnsignedByteArray(part);
+                System.out.println(msgPartAsBytes.length);
+
+            }
+            System.out.println("FRONT End");
             // System.out.println(encrypted.size());
 
             byte[] decrypted = rsa.decrypt(encrypted);
