@@ -56,8 +56,8 @@ public class VernamCipher {
 
         do {
             Random rnd = new Random();
-            p = new BigInteger(512, 1, rnd);
-            q = new BigInteger(512, 1, rnd);
+            p = new BigInteger(512, 1000, rnd);
+            q = new BigInteger(512, 1000, rnd);
         } while (p.mod(four).equals(three) && q.mod(four).equals(three));
 
         primes[0] = p;
