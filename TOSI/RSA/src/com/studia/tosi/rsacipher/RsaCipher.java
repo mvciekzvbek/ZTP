@@ -209,7 +209,7 @@ class RsaCipher {
         for(BigInteger part : encrypted) {
             byte[] partAsBytes = BigIntegers.asUnsignedByteArray(part);
             encryptedSize += partAsBytes.length;
-        }d
+        };
 
         System.out.println("message size: " + msgSize);
         System.out.println("encrypted size: " + encryptedSize);

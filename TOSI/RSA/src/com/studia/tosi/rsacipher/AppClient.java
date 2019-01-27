@@ -29,7 +29,7 @@ public class AppClient {
     public static void main(String[] args) {
         try {
 
-            String filenameWithExt = "wzorki.jpg";
+            String filenameWithExt = "pingwin.jpg";
 
             String filename = filenameWithExt.split("\\.")[0];
             String ext = filenameWithExt.split("\\.")[1];
